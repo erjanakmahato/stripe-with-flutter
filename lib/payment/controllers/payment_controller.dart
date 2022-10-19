@@ -10,19 +10,63 @@ class PaymentController extends GetxController {
   Future<void> makePayment(
       {required String amount, required String currency}) async {
     try {
+      const billingDetails = BillingDetails(
+        email: 'email@stripe.com',
+        phone: '+48888000888',
+        address: Address(
+          city: 'Houston',
+          country: 'US',
+          line1: '1459  Circle Drive',
+          line2: '',
+          state: 'Texas',
+          postalCode: '77063',
+        ),
+      ); // mocked data for tests
       paymentIntentData = await createPaymentIntent(amount, currency);
       if (paymentIntentData != null) {
         await Stripe.instance.initPaymentSheet(
-            paymentSheetParameters: SetupPaymentSheetParameters(
-          merchantDisplayName: 'Prospects',
-          customerId: paymentIntentData!['customer'],
-          paymentIntentClientSecret: paymentIntentData!['client_secret'],
-          customerEphemeralKeySecret: paymentIntentData!['ephemeralKey'],
-        ));
+          paymentSheetParameters: SetupPaymentSheetParameters(
+            // applePay: const PaymentSheetApplePay(
+            //   merchantCountryCode: 'US',
+            // ),
+            googlePay: const PaymentSheetGooglePay(
+              merchantCountryCode: 'US',
+              testEnv: true,
+            ),
+            appearance: const PaymentSheetAppearance(
+              // colors: PaymentSheetAppearanceColors(
+              //   background: Colors.lightBlue,
+              //   primary: Colors.blue,
+              //   componentBorder: Colors.red,
+              // ),
+              shapes: PaymentSheetShape(
+                //borderWidth: 4.0,
+                shadow: PaymentSheetShadowParams(color: Colors.red),
+              ),
+              primaryButton: PaymentSheetPrimaryButtonAppearance(
+                shapes: PaymentSheetPrimaryButtonShape(blurRadius: 0),
+                colors: PaymentSheetPrimaryButtonTheme(
+                  light: PaymentSheetPrimaryButtonThemeColors(
+                    background: Color.fromARGB(255, 231, 235, 30),
+                    text: Color.fromARGB(255, 235, 92, 30),
+                    border: Color.fromARGB(255, 235, 92, 30),
+                  ),
+                ),
+              ),
+            ),
+            billingDetails: billingDetails,
+            style: ThemeMode.dark,
+            customFlow: true,
+            merchantDisplayName: 'Prospects',
+            customerId: paymentIntentData!['customer'],
+            paymentIntentClientSecret: paymentIntentData!['client_secret'],
+            customerEphemeralKeySecret: paymentIntentData!['ephemeralKey'],
+          ),
+        );
         displayPaymentSheet();
       }
     } catch (e, s) {
-      print('exception:$e$s');
+      print(paymentIntentData);
     }
   }
 
@@ -59,7 +103,7 @@ class PaymentController extends GetxController {
           body: body,
           headers: {
             'Authorization':
-                'Bearer sk_test_51Ls2hBFjgBcbzZRi6T8PMLRBavVLllwUi16p0ukNL3ogbcqehYmo6QWrcYyPSSF1SqIzAS9f8wI9hRDz88ygge8Z00X543azz6',
+                'Bearer sk_test_51Ls2hBFjgBcbzZRi6T8PMLRBavVLllwUi16p0ukNL3ogbcqehYmo6QWrcYyPSSF1SqIzAS9f8wI9hRDz88ygge8Z00X543azz6', //your secret key here
             'Content-Type': 'application/x-www-form-urlencoded'
           });
       return jsonDecode(response.body);
